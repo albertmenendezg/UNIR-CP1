@@ -1,0 +1,83 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Get Code') {
+            steps {
+                git url: 'https://github.com/albertmenendezg/UNIR-CP1'
+            }
+        }
+
+        stage('Unit') {
+            steps {
+                script {
+                    sh '''
+                        PYTHONPATH=. pytest test/unit/ --junitxml=result-unit.xml
+                    '''
+                    junit 'result*.xml'
+                }
+            }
+        }
+
+        stage('Rest') {
+            steps {
+                script {
+                    sh '''
+                        export FLASK_APP=app.api
+
+                        flask run --host=0.0.0.0 --port=5000 &
+                        FLASK_PID=$!
+
+                        java -jar wiremock-standalone-3.13.0.jar --port 9090 --root-dir test/wiremock &
+                        MOCK_PID=$!
+
+                        sleep 10
+                        pytest test/rest --junitxml=result-rest.xml
+
+                        kill $MOCK_PID
+                        kill $FLASK_PID
+                    '''
+                }
+            }
+        }
+        
+        stage('Static') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    sh '''
+                        flake8 --exit-zero --format=pylint app > flake8.out
+                    '''
+                    recordIssues tools: [flake8(name: 'Flake8', pattern: 'flake8.out')],
+                    qualityGates: [
+                        [threshold: 8, type: 'TOTAL', unstable: true],
+                        [threshold: 10, type: 'TOTAL', failure: true]
+                    ]
+                }
+            }
+        }
+        
+        stage('Security') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    sh '''
+                        bandit --exit-zero -r app -f custom -o bandit.out --msg-template "{abspath}:{line}: [{test_id}] {msg}"
+                    '''
+                    recordIssues tools: [pyLint(name: 'Bandit', pattern: 'bandit.out')],
+                    qualityGates: [
+                        [threshold: 2, type: 'TOTAL', unstable: true],
+                        [threshold: 4, type: 'TOTAL', unstable: false]
+                    ]
+                }
+            }
+        }
+        
+        stage('Performance') {
+            steps {
+                sh '''
+                    jmeter/bin/jmeter -n -t test/jmeter/flask.jmx -l flask.jtl
+                '''
+                perfReport sourceDataFiles: 'flask.jtl'
+            }
+        }
+    }
+}

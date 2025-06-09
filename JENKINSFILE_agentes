@@ -15,6 +15,8 @@ pipeline {
                     steps {
                         script {
                             sh '''
+                                whoami
+                                hostname
                                 PYTHONPATH=. pytest test/unit/ --junitxml=result-unit.xml
                             '''
                             junit 'result*.xml'
@@ -27,6 +29,8 @@ pipeline {
                     steps {
                         script {
                             sh '''
+                                whoami
+                                hostname
                                 export FLASK_APP=app.api
 
                                 flask run --host=0.0.0.0 --port=5000 &
@@ -54,6 +58,8 @@ pipeline {
                     steps {
                         catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                             sh '''
+                                whoami
+                                hostname
                                 flake8 --exit-zero --format=pylint app > flake8.out
                             '''
                             recordIssues tools: [flake8(name: 'Flake8', pattern: 'flake8.out')],
@@ -70,6 +76,8 @@ pipeline {
                     steps {
                         catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                             sh '''
+                                whoami
+                                hostname
                                 bandit --exit-zero -r app -f custom -o bandit.out --msg-template "{abspath}:{line}: [{test_id}] {msg}"
                             '''
                             recordIssues tools: [pyLint(name: 'Bandit', pattern: 'bandit.out')],
@@ -85,6 +93,8 @@ pipeline {
                     agent { label 'performance' }
                     steps {
                         sh '''
+                            whoami
+                            hostname
                             jmeter/bin/jmeter -n -t test/jmeter/flask.jmx -l flask.jtl
                         '''
                         perfReport sourceDataFiles: 'flask.jtl'

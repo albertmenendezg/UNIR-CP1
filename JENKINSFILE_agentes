@@ -5,7 +5,7 @@ pipeline {
         stage('Get Code') {
             steps {
                 git url: 'https://github.com/albertmenendezg/UNIR-CP1'
-                stash name: 'code' includes: '**'
+                stash name: 'code', includes: '**'
             }
         }
 

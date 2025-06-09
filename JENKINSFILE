@@ -28,8 +28,8 @@ pipeline {
                         flask run --host=0.0.0.0 --port=5000 &
                         FLASK_PID=$!
 
-                        java -jar wiremock-standalone-3.13.0.jar --port 9090 --root-dir test/wiremock &
-                        MOCK_PID=$!
+                                java -jar wiremock-standalone-3.13.0.jar --port 9090 --root-dir test/wiremock &
+                                MOCK_PID=$!
 
                         sleep 10
                         pytest test/rest --junitxml=result-rest.xml

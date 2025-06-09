@@ -31,8 +31,8 @@ pipeline {
                                 java -jar wiremock-standalone-3.13.0.jar --port 9090 --root-dir test/wiremock &
                                 MOCK_PID=$!
 
-                        sleep 10
-                        pytest test/rest --junitxml=result-rest.xml
+                                sleep 10
+                                pytest test/rest --junitxml=result-rest.xml
 
                         kill $MOCK_PID
                         kill $FLASK_PID

@@ -72,10 +72,10 @@ pipeline {
                 }
                 
                 stage('Security') {
+                    agent {
+                        label: 'security'
+                    }
                     steps {
-                        agent {
-                            label: 'security'
-                        }
                         catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                             sh '''
                                 bandit --exit-zero -r app -f custom -o bandit.out --msg-template "{abspath}:{line}: [{test_id}] {msg}"

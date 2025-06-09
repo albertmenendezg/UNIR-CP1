@@ -11,6 +11,9 @@ pipeline {
         stage('Unit & Rest Tests') {
             parallel {
                 stage('Unit') {
+                    agent {
+                        label: 'unit'
+                    }
                     steps {
                         script {
                             sh '''
@@ -22,6 +25,9 @@ pipeline {
                 }
 
                 stage('Rest') {
+                    agent {
+                        label: 'rest'
+                    }
                     steps {
                         script {
                             sh '''
@@ -48,6 +54,9 @@ pipeline {
         stage('Quality Tests') {
             parallel {
                 stage('Static') {
+                    agent {
+                        label: 'static'
+                    }
                     steps {
                         catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                             sh '''
@@ -64,6 +73,9 @@ pipeline {
                 
                 stage('Security') {
                     steps {
+                        agent {
+                            label: 'security'
+                        }
                         catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                             sh '''
                                 bandit --exit-zero -r app -f custom -o bandit.out --msg-template "{abspath}:{line}: [{test_id}] {msg}"
@@ -78,6 +90,9 @@ pipeline {
                 }
                 
                 stage('Performance') {
+                    agent {
+                        label: 'performance'
+                    }
                     steps {
                         sh '''
                             jmeter/bin/jmeter -n -t test/jmeter/flask.jmx -l flask.jtl

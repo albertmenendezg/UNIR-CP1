@@ -1,15 +1,10 @@
 pipeline {
-    options {
-        skipDefaultCheckout(true)
-    }
-    
     agent any
 
     stages {
         stage('Get Code') {
             steps {
                 git url: 'https://github.com/albertmenendezg/UNIR-CP1'
-                stash name: 'code', includes: '**'
             }
         }
 
@@ -18,7 +13,6 @@ pipeline {
                 stage('Unit') {
                     steps {
                         script {
-                            unstash name: 'code'
                             sh '''
                                 PYTHONPATH=. pytest test/unit/ --junitxml=result-unit.xml
                             '''
@@ -30,7 +24,6 @@ pipeline {
                 stage('Rest') {
                     steps {
                         script {
-                            unstash name: 'code'
                             sh '''
                                 export FLASK_APP=app.api
 
@@ -57,7 +50,6 @@ pipeline {
                 stage('Static') {
                     steps {
                         catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                            unstash name: 'code'
                             sh '''
                                 flake8 --exit-zero --format=pylint app > flake8.out
                             '''
@@ -73,7 +65,6 @@ pipeline {
                 stage('Security') {
                     steps {
                         catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                            unstash name: 'code'
                             sh '''
                                 bandit --exit-zero -r app -f custom -o bandit.out --msg-template "{abspath}:{line}: [{test_id}] {msg}"
                             '''
@@ -88,7 +79,6 @@ pipeline {
                 
                 stage('Performance') {
                     steps {
-                        unstash name: 'code'
                         sh '''
                             jmeter/bin/jmeter -n -t test/jmeter/flask.jmx -l flask.jtl
                         '''
